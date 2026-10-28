@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prototipo A Tiempo</title>
+<style>
+  :root {
+    --ink: #1C2321; --ink2: #2E3B38; --muted: #6B7774; --line: #DDE3E1;
+    --bg: #E9EDEC; --card: #FFFFFF; --soft: #F1F3F2;
+    --orange: #D9822B; --orange-soft: #FBEBDB; --green: #2E6B5E; --green-soft: #DCEBE7;
+    --red: #B5541C; --wa: #E6F4D7;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #121715; } }
+  :root[data-theme="dark"] { --bg: #121715; }
+  * { box-sizing: border-box; margin: 0; }
+  body { font-family: -apple-system, "Segoe UI", Calibri, sans-serif; background: var(--bg); color: var(--ink2);
+         min-height: 100vh; display: flex; justify-content: center; align-items: flex-start; padding: 24px 16px; }
+  .phone { width: 100%; max-width: 400px; background: var(--card); border-radius: 28px; overflow: hidden;
+           box-shadow: 0 12px 40px rgba(28,35,33,.18); display: flex; flex-direction: column; min-height: 760px; }
+  header { background: var(--ink); color: #fff; padding: 18px 18px 14px; }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .clock { width: 28px; height: 28px; border-radius: 50%; background: var(--orange); position: relative; flex: none; }
+  .clock::before { content: ""; position: absolute; left: 13px; top: 6px; width: 3px; height: 9px; background: #fff; border-radius: 2px; }
+  .clock::after { content: ""; position: absolute; left: 13px; top: 13px; width: 8px; height: 3px; background: #fff; border-radius: 2px; }
+  .brand b { font-family: Cambria, Georgia, serif; font-size: 20px; }
+  .brand small { display: block; color: #C9D4D1; font-size: 12px; }
+  .switch { margin-left: auto; display: flex; background: rgba(255,255,255,.1); border-radius: 999px; padding: 3px; }
+  .switch button { border: 0; background: none; color: #C9D4D1; font: inherit; font-size: 12px; padding: 6px 10px; border-radius: 999px; cursor: pointer; }
+  .switch button.on { background: #fff; color: var(--ink); font-weight: 600; }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 14px; }
+  .stat { background: rgba(255,255,255,.08); border-radius: 12px; padding: 8px 10px; }
+  .stat b { display: block; font-size: 20px; color: #fff; }
+  .stat span { font-size: 11px; color: #C9D4D1; }
+  main { flex: 1; overflow-y: auto; padding: 14px; background: var(--soft); }
+  .tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+  .tabs button { flex: 1; border: 1px solid var(--line); background: #fff; border-radius: 10px; padding: 8px; font: inherit; font-size: 13px; color: var(--muted); cursor: pointer; }
+  .tabs button.on { border-color: var(--ink); color: var(--ink); font-weight: 600; }
+  .banner { background: var(--orange-soft); border-radius: 14px; padding: 12px; margin-bottom: 12px; font-size: 14px; color: var(--ink); }
+  .banner .btn { margin-top: 8px; }
+  .appt { background: #fff; border-radius: 14px; padding: 12px; margin-bottom: 10px; border: 1px solid var(--line); }
+  .appt.now { border: 2px solid var(--orange); }
+  .appt.cancel { opacity: .55; }
+  .row { display: flex; align-items: center; gap: 8px; }
+  .time { font-weight: 700; font-size: 16px; color: var(--ink); min-width: 62px; }
+  .time s { display: block; font-weight: 400; font-size: 11px; color: var(--muted); }
+  .who { flex: 1; }
+  .who b { color: var(--ink); font-size: 15px; }
+  .who div { font-size: 12px; color: var(--muted); }
+  .pill { font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 999px; white-space: nowrap; }
+  .p-ok { background: var(--green-soft); color: var(--green); }
+  .p-wait { background: var(--soft); color: var(--muted); }
+  .p-now { background: var(--orange); color: #fff; }
+  .p-late { background: var(--orange-soft); color: var(--red); }
+  .p-x { background: #F3DED3; color: var(--red); }
+  .p-done { background: var(--soft); color: var(--muted); }
+  .actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .btn { border: 0; border-radius: 10px; padding: 8px 12px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .btn-main { background: var(--ink); color: #fff; }
+  .btn-orange { background: var(--orange); color: #fff; }
+  .btn-ghost { background: var(--soft); color: var(--ink); border: 1px solid var(--line); }
+  .btn:active { transform: scale(.97); }
+  .section { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin: 14px 2px 8px; }
+  .empty { color: var(--muted); font-size: 14px; text-align: center; padding: 30px 10px; }
+  /* Vista cliente: WhatsApp */
+  .chat-head { display: flex; align-items: center; gap: 10px; background: #fff; border-radius: 14px; padding: 10px 12px; margin-bottom: 10px; }
+  .avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--green); color: #fff; display: grid; place-items: center; font-weight: 700; }
+  .chat-head select { margin-left: auto; font: inherit; font-size: 13px; padding: 6px; border-radius: 8px; border: 1px solid var(--line); }
+  .bubble { background: var(--wa); border-radius: 12px 12px 12px 4px; padding: 10px 12px; margin-bottom: 8px; max-width: 88%; font-size: 14px; color: var(--ink); }
+  .bubble small { display: block; text-align: right; color: var(--muted); font-size: 11px; margin-top: 4px; }
+  .bubble .actions { margin-top: 8px; }
+  .me { background: #fff; margin-left: auto; border-radius: 12px 12px 4px 12px; }
+  footer { padding: 10px 14px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--muted); background: #fff; }
+  footer button { background: none; border: 0; color: var(--green); font: inherit; font-weight: 600; cursor: pointer; }
+  .toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%) translateY(20px); background: var(--ink); color: #fff;
+           padding: 10px 16px; border-radius: 12px; font-size: 14px; opacity: 0; transition: .25s; pointer-events: none; max-width: 90vw; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<div class="phone">
+  <header>
+    <div class="brand">
+      <div class="clock"></div>
+      <div><b>A Tiempo</b><small>Peluquería de prueba · Hoy</small></div>
+      <div class="switch">
+        <button id="vNeg" class="on" onclick="setView('negocio')">Negocio</button>
+        <button id="vCli" onclick="setView('cliente')">Cliente</button>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat"><b id="sAvisos">0</b><span>avisos enviados</span></div>
+      <div class="stat"><b id="sConf">0</b><span>citas confirmadas</span></div>
+      <div class="stat"><b id="sCupos">0</b><span>cupos recuperados</span></div>
+    </div>
+  </header>
+  <main id="main"></main>
+  <footer><span>Prototipo de prueba · datos ficticios</span><button onclick="reset()">Reiniciar</button></footer>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const START = [
+  { id: 1, pro: "Caro", client: "Valeria", service: "Coloración", start: 840, dur: 90, status: "now" },
+  { id: 2, pro: "Caro", client: "Camila", service: "Corte y cepillado", start: 930, dur: 45, status: "ok" },
+  { id: 3, pro: "Caro", client: "Juliana", service: "Manicure", start: 975, dur: 40, status: "wait" },
+  { id: 4, pro: "Caro", client: "Natalia", service: "Corte", start: 1020, dur: 30, status: "wait" },
+  { id: 5, pro: "Andrés", client: "Santiago", service: "Corte y barba", start: 870, dur: 40, status: "now" },
+  { id: 6, pro: "Andrés", client: "Mateo", service: "Corte", start: 910, dur: 30, status: "ok" },
+  { id: 7, pro: "Andrés", client: "Daniel", service: "Corte", start: 940, dur: 30, status: "wait" },
+];
+const WAITLIST0 = ["Laura", "Felipe", "Sara"];
+let S;
+function reset() {
+  S = { appts: START.map(a => ({ ...a, orig: a.start })), wait: [...WAITLIST0], msgs: {}, avisos: 0, cupos: 0,
+        tab: "Caro", view: S ? S.view : "negocio", free: null, chat: "Camila" };
+  render();
+}
+const fmt = m => { let h = Math.floor(m / 60), mm = String(m % 60).padStart(2, "0"); const ap = h >= 12 ? "pm" : "am"; h = h % 12 || 12; return `${h}:${mm} ${ap}`; };
+const now = () => { const d = new Date(); return d.toLocaleTimeString("es-CO", { hour: "numeric", minute: "2-digit" }); };
+function toast(t) { const el = document.getElementById("toast"); el.textContent = t; el.classList.add("show"); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove("show"), 2600); }
+function send(client, text, buttons) { (S.msgs[client] ||= []).push({ text, buttons, at: now() }); S.avisos++; }
+
+function delay(id, mins) {
+  const cur = S.appts.find(a => a.id === id);
+  cur.dur += mins;
+  const next = S.appts.filter(a => a.pro === cur.pro && a.start > cur.start && a.status !== "x" && a.status !== "done")
+                      .sort((a, b) => a.start - b.start);
+  let end = cur.start + cur.dur, n = 0;
+  for (const a of next) {
+    if (a.start < end) {
+      a.start = end;
+      send(a.client, `Hola ${a.client}, ${cur.pro} va con un poco de retraso. Tu cita de ${a.service.toLowerCase()} empieza a las ${fmt(a.start)} (antes ${fmt(a.orig)}). Así no tienes que esperar en el local.`,
+           ["Perfecto", "Reprogramar"]);
+      if (a.status !== "x") a.status = a.status === "ok" ? "late" : a.status;
+      n++;
+    }
+    end = a.start + a.dur;
+  }
+  toast(n ? `Se avisó a ${n} cliente${n > 1 ? "s" : ""} por WhatsApp` : "La agenda tenía margen: nadie se corre");
+  render();
+}
+function finish(id) {
+  const cur = S.appts.find(a => a.id === id); cur.status = "done";
+  const next = S.appts.filter(a => a.pro === cur.pro && a.status !== "x" && a.status !== "done").sort((a, b) => a.start - b.start)[0];
+  if (next) next.status = "now";
+  toast("Servicio terminado"); render();
+}
+function remind(id) {
+  const a = S.appts.find(x => x.id === id);
+  send(a.client, `Hola ${a.client}, te recordamos tu cita de ${a.service.toLowerCase()} con ${a.pro} hoy a las ${fmt(a.start)}. ¿Nos confirmas?`, ["Confirmo", "No puedo ir"]);
+  a.status = "sent"; toast(`Recordatorio enviado a ${a.client}`); render();
+  setTimeout(() => { if (a.status === "sent") { a.status = "ok"; toast(`${a.client} confirmó su cita`); render(); } }, 1800);
+}
+function cancel(id) {
+  const a = S.appts.find(x => x.id === id); a.status = "x";
+  S.free = { pro: a.pro, start: a.start, dur: a.dur, service: a.service };
+  toast(`${a.client} canceló. Quedó un cupo a las ${fmt(a.start)}`); render();
+}
+function offer() {
+  if (!S.free || !S.wait.length) return;
+  const who = S.wait.shift(), f = S.free;
+  send(who, `Hola ${who}, se liberó un cupo hoy a las ${fmt(f.start)} con ${f.pro}. ¿Lo quieres?`, ["Lo tomo", "No, gracias"]);
+  toast(`Cupo ofrecido a ${who}`); render();
+  setTimeout(() => {
+    S.appts.push({ id: Date.now(), pro: f.pro, client: who, service: f.service, start: f.start, orig: f.start, dur: f.dur, status: "ok" });
+    S.free = null; S.cupos++; toast(`${who} tomó el cupo de las ${fmt(f.start)}`); render();
+  }, 1800);
+}
+
+const PILL = { now: ["En curso", "p-now"], ok: ["Confirmada", "p-ok"], wait: ["Sin confirmar", "p-wait"], sent: ["Esperando respuesta", "p-wait"],
+               late: ["Avisada del retraso", "p-late"], x: ["Cancelada", "p-x"], done: ["Terminada", "p-done"] };
+
+function apptHTML(a) {
+  const [label, cls] = PILL[a.status];
+  const moved = a.start !== a.orig ? `<s>${fmt(a.orig)}</s>` : "";
+  let acts = "";
+  if (a.status === "now") acts = `<button class="btn btn-orange" onclick="delay(${a.id},10)">Se alarga 10 min</button>
+    <button class="btn btn-orange" onclick="delay(${a.id},20)">Se alarga 20 min</button>
+    <button class="btn btn-main" onclick="finish(${a.id})">Terminó</button>`;
+  else if (a.status === "wait") acts = `<button class="btn btn-main" onclick="remind(${a.id})">Enviar recordatorio</button>
+    <button class="btn btn-ghost" onclick="cancel(${a.id})">Canceló</button>`;
+  else if (a.status === "ok" || a.status === "late") acts = `<button class="btn btn-ghost" onclick="cancel(${a.id})">Canceló</button>`;
+  return `<div class="appt ${a.status === "now" ? "now" : ""} ${a.status === "x" ? "cancel" : ""}">
+    <div class="row"><div class="time">${fmt(a.start)}${moved}</div>
+      <div class="who"><b>${a.client}</b><div>${a.service} · ${a.dur} min</div></div>
+      <span class="pill ${cls}">${label}</span></div>
+    ${acts ? `<div class="actions">${acts}</div>` : ""}</div>`;
+}
+
+function negocio() {
+  const pros = ["Caro", "Andrés"];
+  let h = `<div class="tabs">${pros.map(p => `<button class="${S.tab === p ? "on" : ""}" onclick="S.tab='${p}';render()">${p}</button>`).join("")}
+           <button class="${S.tab === "espera" ? "on" : ""}" onclick="S.tab='espera';render()">Lista de espera (${S.wait.length})</button></div>`;
+  if (S.free) h += `<div class="banner"><b>Cupo libre a las ${fmt(S.free.start)}</b> con ${S.free.pro}.<br>
+      ${S.wait.length ? `Hay ${S.wait.length} cliente${S.wait.length > 1 ? "s" : ""} en lista de espera.` : "No hay nadie en lista de espera."}
+      ${S.wait.length ? `<div><button class="btn btn-orange" onclick="offer()">Ofrecer a ${S.wait[0]}</button></div>` : ""}</div>`;
+  if (S.tab === "espera") {
+    h += `<div class="section">Quieren un turno hoy</div>`;
+    h += S.wait.length ? S.wait.map((w, i) => `<div class="appt"><div class="row"><div class="time">${i + 1}</div><div class="who"><b>${w}</b><div>Cualquier hora de la tarde</div></div></div></div>`).join("")
+                       : `<div class="empty">La lista de espera está vacía.</div>`;
+    return h;
+  }
+  const list = S.appts.filter(a => a.pro === S.tab).sort((a, b) => a.start - b.start);
+  h += `<div class="section">Agenda de ${S.tab}</div>` + list.map(apptHTML).join("");
+  return h;
+}
+
+function cliente() {
+  const names = [...new Set([...S.appts.map(a => a.client), ...WAITLIST0])];
+  const msgs = S.msgs[S.chat] || [];
+  let h = `<div class="chat-head"><div class="avatar">AT</div><div><b>Peluquería de prueba</b><div style="font-size:12px;color:var(--muted)">vía WhatsApp</div></div>
+    <select onchange="S.chat=this.value;render()">${names.map(n => `<option ${n === S.chat ? "selected" : ""}>${n}</option>`).join("")}</select></div>`;
+  if (!msgs.length) return h + `<div class="empty">${S.chat} todavía no ha recibido mensajes.<br><br>Cambia a la vista <b>Negocio</b> y usa los botones: "Se alarga", "Enviar recordatorio" o "Canceló".</div>`;
+  h += msgs.map((m, i) => `<div class="bubble">${m.text}
+      ${m.reply ? "" : `<div class="actions">${m.buttons.map(b => `<button class="btn btn-ghost" onclick="reply('${S.chat}',${i},'${b}')">${b}</button>`).join("")}</div>`}
+      <small>${m.at}</small></div>${m.reply ? `<div class="bubble me">${m.reply}<small>${m.at}</small></div>` : ""}`).join("");
+  return h;
+}
+function reply(c, i, b) {
+  S.msgs[c][i].reply = b;
+  const a = S.appts.find(x => x.client === c && x.status !== "x");
+  if (a && (b === "Confirmo") ) a.status = "ok";
+  if (a && (b === "No puedo ir" || b === "Reprogramar")) { cancel(a.id); return; }
+  render();
+}
+
+function setView(v) { S.view = v; render(); }
+function render() {
+  document.getElementById("vNeg").classList.toggle("on", S.view === "negocio");
+  document.getElementById("vCli").classList.toggle("on", S.view === "cliente");
+  document.getElementById("main").innerHTML = S.view === "negocio" ? negocio() : cliente();
+  document.getElementById("sAvisos").textContent = S.avisos;
+  document.getElementById("sConf").textContent = S.appts.filter(a => a.status === "ok" || a.status === "late").length;
+  document.getElementById("sCupos").textContent = S.cupos;
+}
+reset();
+</script>
+</body>
+</html>
